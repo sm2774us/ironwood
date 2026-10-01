@@ -1,0 +1,65 @@
+name: Deploy
+on:
+  workflow_dispatch:
+    inputs:
+      environment: { type: choice, options: [dev, prod], default: dev }
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'dev' }}
+  cancel-in-progress: false
+permissions: { id-token: write, contents: read }
+env:
+  ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  deploy:
+    # Inert until AWS is configured: without the role variable the job is skipped, not failed.
+    if: ${{ vars.AWS_DEPLOY_ROLE_ARN != '' }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: npm }
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # ── API: build → ECR → ECS (rolling, circuit-breaker rollback) ──
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build & push API image
+        run: |
+          IMAGE=${{ steps.ecr.outputs.registry }}/ironwood-${ENVIRONMENT}-api:${GITHUB_SHA}
+          docker build -f apps/api/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+      - name: Render task definition
+        id: task
+        run: |
+          aws ecs describe-task-definition --task-definition ironwood-${ENVIRONMENT}-api \
+            --query taskDefinition > task-def.json
+      - uses: aws-actions/amazon-ecs-render-task-definition@v1
+        id: render
+        with:
+          task-definition: task-def.json
+          container-name: api
+          image: ${{ env.IMAGE }}
+      - uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: ironwood-${{ env.ENVIRONMENT }}-api
+          cluster: ironwood-${{ env.ENVIRONMENT }}
+          wait-for-service-stability: true
+
+      # ── Web: build → S3 → CloudFront invalidation ──
+      - run: npm ci && npm run build -w @ironwood/web
+        env: { VITE_AUTHOR_TOKEN: '' }
+      - name: Sync to S3
+        run: |
+          B=${{ vars.WEB_BUCKET }}
+          aws s3 sync apps/web/dist "s3://$B" --delete --exclude index.html --cache-control "public,max-age=31536000,immutable"
+          aws s3 cp apps/web/dist/index.html "s3://$B/index.html" --cache-control "no-cache"
+      - run: aws cloudfront create-invalidation --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/index.html"

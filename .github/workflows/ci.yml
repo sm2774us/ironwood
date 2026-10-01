@@ -1,0 +1,167 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  verify:
+    name: verify (format, lint, types, tests, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:coverage
+      - run: npm run build
+
+  e2e:
+    name: e2e (Playwright + axe)
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
+
+  lighthouse:
+    name: lighthouse (performance and accessibility budgets)
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Start API and preview server
+        run: |
+          npm run start -w @ironwood/api > api.log 2>&1 &
+          npm run preview -w @ironwood/web -- --strictPort > web.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fs http://localhost:3001/healthz > /dev/null && curl -fs http://localhost:4173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat api.log web.log
+          exit 1
+      - run: npx --yes @lhci/cli@0.14.x collect --config=lighthouserc.json
+      - run: npx --yes @lhci/cli@0.14.x assert --config=lighthouserc.json
+
+  docker:
+    name: docker (${{ matrix.app }})
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [api, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          tags: ironwood-${{ matrix.app }}:ci
+          load: true
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,scope=${{ matrix.app }},mode=max
+      - name: Smoke test (API image starts hardened and is ready)
+        if: matrix.app == 'api'
+        run: |
+          docker run -d --name smoke -p 3001:3001 --read-only --cap-drop ALL \
+            -e NODE_ENV=production -e AUTHOR_TOKEN=ci-smoke-token-1234 ironwood-api:ci
+          for i in $(seq 1 30); do
+            if curl -fs http://localhost:3001/readyz > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://localhost:3001/readyz
+          curl -fsS -o /dev/null http://localhost:3001/graphql/execute.json/ironwood/home-hero
+          docker logs smoke
+          docker rm -f smoke
+      # Report-only: a new CVE in a base image must not turn every unrelated pull request red.
+      - name: Vulnerability report (Trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        continue-on-error: true
+        with:
+          image-ref: ironwood-${{ matrix.app }}:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          format: table
+          exit-code: '0'
+
+  terraform:
+    name: terraform (fmt, validate, tfsec)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+      - run: terraform -chdir=infra/terraform fmt -check -recursive
+      - name: Validate each environment
+        run: |
+          for env in dev prod; do
+            terraform -chdir=infra/terraform/envs/$env init -backend=false -input=false
+            terraform -chdir=infra/terraform/envs/$env validate
+          done
+      - name: tfsec (pinned binary; exclusions documented in infra/terraform/.tfsec/config.yml)
+        run: |
+          curl -sSfL -o tfsec https://github.com/aquasecurity/tfsec/releases/download/v1.28.11/tfsec-linux-amd64
+          echo "18e2f947a4f0ec74bf6db07245fc81f83930835ef1b5d51d2d5152a6548b5e45  tfsec" | sha256sum -c -
+          chmod +x tfsec
+          ./tfsec infra/terraform --no-colour
+
+  ci-ok:
+    name: ci-ok (required check)
+    if: always()
+    needs: [verify, e2e, lighthouse, docker, terraform]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every upstream job must have succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: $RESULTS"
+          for r in $RESULTS; do
+            if [ "$r" != "success" ]; then
+              echo "::error::A required job did not succeed ($r)"
+              exit 1
+            fi
+          done

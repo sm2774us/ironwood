@@ -1,0 +1,2 @@
+bucket = "YOUR-TFSTATE-BUCKET"
+region = "us-east-1"

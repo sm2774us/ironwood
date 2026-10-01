@@ -1,0 +1,6 @@
+[
+  { "id": "main", "components": ["hero", "offer", "room", "venue"] },
+  { "id": "offer-list", "components": ["offer"] },
+  { "id": "room-list", "components": ["room"] },
+  { "id": "venue-list", "components": ["venue"] }
+]

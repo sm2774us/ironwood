@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 30% 98%;
+    --foreground: 265 30% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 265 30% 10%;
+    --primary: 30 92% 34%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 20% 93%;
+    --secondary-foreground: 265 30% 14%;
+    --muted: 40 18% 94%;
+    --muted-foreground: 265 10% 36%;
+    --accent: 330 75% 42%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 60% 28%;
+    --border: 40 12% 86%;
+    --input: 40 12% 80%;
+    --ring: 30 92% 34%;
+    --radius: 0.75rem;
+  }
+  .dark {
+    --background: 265 30% 6%;
+    --foreground: 40 20% 96%;
+    --card: 265 25% 10%;
+    --card-foreground: 40 20% 96%;
+    --primary: 38 92% 60%;
+    --primary-foreground: 265 30% 8%;
+    --secondary: 265 20% 16%;
+    --secondary-foreground: 40 20% 96%;
+    --muted: 265 15% 16%;
+    --muted-foreground: 255 10% 72%;
+    --accent: 330 85% 66%;
+    --accent-foreground: 265 30% 8%;
+    --destructive: 0 80% 68%;
+    --destructive-foreground: 265 30% 8%;
+    --success: 152 60% 55%;
+    --border: 265 15% 22%;
+    --input: 265 15% 28%;
+    --ring: 38 92% 60%;
+  }
+  * {
+    @apply border-border;
+  }
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  main:focus {
+    outline: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .skeleton {
+    @apply relative overflow-hidden rounded-md bg-muted;
+  }
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-foreground/10 to-transparent;
+    animation: shimmer 1.4s infinite;
+  }
+  .sr-only-focusable:not(:focus) {
+    @apply sr-only;
+  }
+}

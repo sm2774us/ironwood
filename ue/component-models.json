@@ -1,0 +1,227 @@
+[
+  {
+    "id": "hero",
+    "fields": [
+      {
+        "component": "text",
+        "name": "eyebrow",
+        "label": "Eyebrow",
+        "valueType": "string",
+        "validation": { "maxLength": 60 }
+      },
+      {
+        "component": "text",
+        "name": "title",
+        "label": "Headline",
+        "valueType": "string",
+        "required": true,
+        "validation": { "maxLength": 90 }
+      },
+      {
+        "component": "textarea",
+        "name": "subtitle",
+        "label": "Subtitle",
+        "valueType": "string",
+        "validation": { "maxLength": 240 }
+      },
+      {
+        "component": "text",
+        "name": "cta_label",
+        "label": "CTA label",
+        "valueType": "string",
+        "required": true,
+        "validation": { "maxLength": 30 }
+      },
+      {
+        "component": "text",
+        "name": "cta_href",
+        "label": "CTA link",
+        "valueType": "string",
+        "validation": { "regExp": "^/" }
+      },
+      {
+        "component": "reference",
+        "name": "image",
+        "label": "Image",
+        "valueType": "string",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "name": "image_alt",
+        "label": "Image alt text",
+        "valueType": "string",
+        "required": true,
+        "validation": { "maxLength": 200 }
+      }
+    ]
+  },
+  {
+    "id": "offer",
+    "fields": [
+      {
+        "component": "text",
+        "name": "title",
+        "label": "Title",
+        "valueType": "string",
+        "required": true,
+        "validation": { "maxLength": 70 }
+      },
+      {
+        "component": "textarea",
+        "name": "summary",
+        "label": "Summary",
+        "valueType": "string",
+        "validation": { "maxLength": 220 }
+      },
+      {
+        "component": "text",
+        "name": "badge",
+        "label": "Badge",
+        "valueType": "string",
+        "validation": { "maxLength": 24 }
+      },
+      {
+        "component": "text",
+        "name": "validThrough",
+        "label": "Valid through",
+        "valueType": "string"
+      },
+      {
+        "component": "text",
+        "name": "ctaLabel",
+        "label": "CTA label",
+        "valueType": "string",
+        "required": true
+      },
+      { "component": "reference", "name": "image", "label": "Image", "valueType": "string" },
+      {
+        "component": "text",
+        "name": "image_alt",
+        "label": "Image alt text",
+        "valueType": "string",
+        "required": true
+      }
+    ]
+  },
+  {
+    "id": "room",
+    "fields": [
+      {
+        "component": "text",
+        "name": "slug",
+        "label": "Slug",
+        "valueType": "string",
+        "required": true,
+        "validation": { "regExp": "^[a-z0-9-]+$" }
+      },
+      {
+        "component": "text",
+        "name": "name",
+        "label": "Name",
+        "valueType": "string",
+        "required": true,
+        "validation": { "maxLength": 60 }
+      },
+      {
+        "component": "text",
+        "name": "tagline",
+        "label": "Tagline",
+        "valueType": "string",
+        "validation": { "maxLength": 100 }
+      },
+      {
+        "component": "richtext",
+        "name": "description",
+        "label": "Description",
+        "valueType": "string"
+      },
+      {
+        "component": "number",
+        "name": "sizeSqFt",
+        "label": "Size (sq ft)",
+        "valueType": "number",
+        "validation": { "numberMin": 1 }
+      },
+      {
+        "component": "number",
+        "name": "maxGuests",
+        "label": "Max guests",
+        "valueType": "number",
+        "validation": { "numberMin": 1, "numberMax": 10 }
+      },
+      { "component": "text", "name": "bedType", "label": "Bed type", "valueType": "string" },
+      {
+        "component": "number",
+        "name": "nightlyRate",
+        "label": "Nightly rate (USD)",
+        "valueType": "number",
+        "validation": { "numberMin": 1 }
+      },
+      {
+        "component": "text",
+        "name": "amenities",
+        "label": "Amenities",
+        "valueType": "string",
+        "multi": true
+      },
+      { "component": "reference", "name": "image", "label": "Image", "valueType": "string" },
+      {
+        "component": "text",
+        "name": "image_alt",
+        "label": "Image alt text",
+        "valueType": "string",
+        "required": true
+      }
+    ]
+  },
+  {
+    "id": "venue",
+    "fields": [
+      {
+        "component": "text",
+        "name": "slug",
+        "label": "Slug",
+        "valueType": "string",
+        "required": true
+      },
+      {
+        "component": "text",
+        "name": "name",
+        "label": "Name",
+        "valueType": "string",
+        "required": true
+      },
+      { "component": "text", "name": "cuisine", "label": "Cuisine", "valueType": "string" },
+      {
+        "component": "textarea",
+        "name": "description",
+        "label": "Description",
+        "valueType": "string",
+        "validation": { "maxLength": 400 }
+      },
+      {
+        "component": "number",
+        "name": "priceTier",
+        "label": "Price tier (1–4)",
+        "valueType": "number",
+        "validation": { "numberMin": 1, "numberMax": 4 }
+      },
+      { "component": "text", "name": "hours", "label": "Hours", "valueType": "string" },
+      {
+        "component": "boolean",
+        "name": "reservationsRequired",
+        "label": "Reservations required",
+        "valueType": "boolean"
+      },
+      { "component": "reference", "name": "image", "label": "Image", "valueType": "string" },
+      {
+        "component": "text",
+        "name": "image_alt",
+        "label": "Image alt text",
+        "valueType": "string",
+        "required": true
+      }
+    ]
+  }
+]

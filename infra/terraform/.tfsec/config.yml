@@ -1,0 +1,13 @@
+# Checks deliberately not enforced in this reference, each a cost or scope decision rather than an oversight.
+# Revisit when a real account, compliance regime or budget exists.
+exclude:
+  - aws-elb-alb-not-public                      # ALB must be reachable by CloudFront; access is gated by the origin-verify header
+  - aws-cloudfront-use-secure-tls-policy        # default *.cloudfront.net certificate; set a custom domain + TLSv1.2_2021 to satisfy
+  - aws-cloudfront-enable-waf                   # WAF is a paid add-on; attach a web ACL for production traffic
+  - aws-cloudfront-enable-logging               # needs a log bucket; enable for production
+  - aws-s3-enable-bucket-logging                # static assets only; enable access logs for production
+  - aws-s3-encryption-customer-key              # SSE with the AWS-managed KMS key; customer-managed keys cost extra
+  - aws-ecr-repository-customer-key             # AWS-managed KMS key
+  - aws-cloudwatch-log-group-customer-key       # AWS-managed encryption
+  - aws-ssm-secret-use-customer-key             # AWS-managed KMS key
+  - aws-ec2-require-vpc-flow-logs-for-all-vpcs  # flow logs add cost; enable for production

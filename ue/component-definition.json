@@ -1,0 +1,58 @@
+{
+  "groups": [
+    {
+      "title": "Ironwood Resorts",
+      "id": "ironwood",
+      "components": [
+        {
+          "title": "Hero",
+          "id": "hero",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "ironwood/components/hero",
+                "template": { "name": "Hero", "model": "hero" }
+              }
+            }
+          }
+        },
+        {
+          "title": "Offer",
+          "id": "offer",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "ironwood/components/offer",
+                "template": { "name": "Offer", "model": "offer" }
+              }
+            }
+          }
+        },
+        {
+          "title": "Room",
+          "id": "room",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "ironwood/components/room",
+                "template": { "name": "Room", "model": "room" }
+              }
+            }
+          }
+        },
+        {
+          "title": "Venue",
+          "id": "venue",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "ironwood/components/venue",
+                "template": { "name": "Venue", "model": "venue" }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

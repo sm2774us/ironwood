@@ -116,7 +116,7 @@ jobs:
           docker rm -f smoke
       # Report-only: a new CVE in a base image must not turn every unrelated pull request red.
       - name: Vulnerability report (Trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
         continue-on-error: true
         with:
           image-ref: ironwood-${{ matrix.app }}:ci
